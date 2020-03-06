@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
+	"net/url"
+
+	"github.com/gocolly/colly"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"log"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 var db *gorm.DB
@@ -20,25 +18,15 @@ type Item struct {
 	Path   string
 }
 
-func processElement(index int, element *goquery.Selection) {
-	href, exists := element.Attr("href")
-	if exists {
-		if strings.Contains(href, "https") {
-			parsed, err := url.Parse(href)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			item := Item{
-				URL:    href,
-				Scheme: parsed.Scheme,
-				Host:   parsed.Host,
-				Path:   parsed.Path,
-			}
-
-			fmt.Println(item)
-		}
+func processAddress(urlString *url.URL) {
+	item := Item{
+		URL:    urlString.String(),
+		Scheme: urlString.Scheme,
+		Host:   urlString.Host,
+		Path:   urlString.Path,
 	}
+
+	fmt.Println(item)
 }
 
 func initializeDB() {
@@ -46,17 +34,15 @@ func initializeDB() {
 }
 
 func main() {
-	response, err := http.Get("https://github.com")
-	if err != nil {
-		log.Fatal(err)
-	}
+	c := colly.NewCollector()
 
-	defer response.Body.Close()
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		e.Request.Visit(e.Attr("href"))
+	})
 
-	document, err := goquery.NewDocumentFromReader(response.Body)
-	if err != nil {
-		log.Fatal("Error loading HTTP response body. ", err)
-	}
+	c.OnRequest(func(r *colly.Request) {
+		processAddress(r.URL)
+	})
 
-	document.Find("a").Each(processElement)
+	c.Visit("http://go-colly.org/")
 }
