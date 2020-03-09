@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
+	"text/template"
 
 	"github.com/gocolly/colly"
 	"github.com/jinzhu/gorm"
@@ -52,6 +54,10 @@ func initializeDB() {
 	fmt.Println("connected successfully")
 }
 
+type Amount struct {
+	Amount int
+}
+
 func main() {
 	c := colly.NewCollector()
 
@@ -63,22 +69,39 @@ func main() {
 	flag.StringVar(&start, "website", "", "https://github.com")
 	flag.Parse()
 
-	// For every link, visit that link
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		c.Visit(e.Request.AbsoluteURL(link))
-	})
+	if start == "" {
+		tpl, err := template.ParseFiles("./static/index.html")
+		if err != nil {
+			log.Fatal("Error loading a html template")
+			return
+		}
 
-	// Print the amount of websites indexed
-	fmt.Println(getItemAmount())
+		amount := Amount{
+			Amount: getItemAmount(),
+		}
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			tpl.Execute(w, amount)
+		})
+		http.ListenAndServe(":3000", nil)
+	} else {
+		// For every link, visit that link
+		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+			link := e.Attr("href")
+			c.Visit(e.Request.AbsoluteURL(link))
+		})
 
-	// Process the url information we get from the request
-	c.OnRequest(func(r *colly.Request) {
-		processAddress(r.URL)
-	})
+		// Print the amount of websites indexed
+		fmt.Println(getItemAmount())
 
-	// Visit the first URL
-	c.Visit(start)
+		// Process the url information we get from the request
+		c.OnRequest(func(r *colly.Request) {
+			processAddress(r.URL)
+		})
+
+		// Visit the first URL
+		c.Visit(start)
+	}
+
 }
 
 func getItemAmount() int {
