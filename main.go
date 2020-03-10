@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"text/template"
@@ -19,10 +21,10 @@ var db *gorm.DB
 // Item model for storing websites
 type Item struct {
 	gorm.Model
-	URL    string
-	Scheme string
-	Host   string
-	Path   string
+	URL    string `json:"url"`
+	Scheme string `json:"scheme"`
+	Host   string `json:"host"`
+	Path   string `json:"path"`
 }
 
 func processAddress(urlString *url.URL) {
@@ -58,6 +60,25 @@ type Amount struct {
 	Amount int
 }
 
+func randomSearchHandler(w http.ResponseWriter, r *http.Request) {
+	amount := getItemAmount()
+	randomNumber := rand.Intn(amount)
+
+	var item Item
+	if err := db.Where("id = ?", randomNumber).First(&item).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	itemToJSON, err := json.Marshal(item)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(itemToJSON)
+}
+
 func main() {
 	c := colly.NewCollector()
 
@@ -82,6 +103,7 @@ func main() {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			tpl.Execute(w, amount)
 		})
+		http.HandleFunc("/random", randomSearchHandler)
 		http.ListenAndServe(":3000", nil)
 	} else {
 		// For every link, visit that link
