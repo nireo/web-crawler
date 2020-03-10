@@ -79,6 +79,32 @@ func randomSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(itemToJSON)
 }
 
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	queries, ok := r.URL.Query()["query"]
+
+	if !ok || len(queries[0]) < 1 {
+		http.Error(w, "Query not provided", http.StatusBadRequest)
+		return
+	}
+
+	query := queries[0]
+
+	var items []Item
+	if err := db.Find(&items).Where("host = ?", query).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	itemsToJSON, err := json.Marshal(items)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(itemsToJSON)
+}
+
 func main() {
 	c := colly.NewCollector()
 
@@ -104,6 +130,7 @@ func main() {
 			tpl.Execute(w, amount)
 		})
 		http.HandleFunc("/random", randomSearchHandler)
+		http.HandleFunc("/search", searchHandler)
 		http.ListenAndServe(":3000", nil)
 	} else {
 		// For every link, visit that link
