@@ -8,7 +8,8 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"text/template"
+	"strconv"
+	"time"
 
 	"github.com/gocolly/colly"
 	"github.com/jinzhu/gorm"
@@ -29,19 +30,24 @@ type Item struct {
 
 func processAddress(urlString *url.URL) {
 	// check if there is a entry for the host
-	item := Item{
-		URL:    urlString.String(),
-		Scheme: urlString.Scheme,
-		Host:   urlString.Host,
-		Path:   urlString.Path,
+	url := urlString.String()
+	var exists Item
+	if err := db.Where("url = ?", url).First(&exists).Error; err != nil {
+		item := Item{
+			URL:    urlString.String(),
+			Scheme: urlString.Scheme,
+			Host:   urlString.Host,
+			Path:   urlString.Path,
+		}
+
+		// Save to the database
+		db.NewRecord(item)
+		db.Save(&item)
+
+		// Show what websites have been indexed
+		fmt.Println(item.URL + " has been indexed.")
+		globalAmount += 1
 	}
-
-	// Save to the database
-	db.NewRecord(item)
-	db.Save(&item)
-
-	// Show what websites have been indexed
-	fmt.Println(item.URL + " has been indexed.")
 }
 
 func initializeDB() {
@@ -102,6 +108,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(itemsToJSON)
 }
 
+var globalAmount int
+
 func main() {
 	c := colly.NewCollector()
 
@@ -114,34 +122,26 @@ func main() {
 	flag.Parse()
 
 	if start == "" {
-		tpl, err := template.ParseFiles("./static/index.html")
-		if err != nil {
-			log.Fatal("Error loading a html template")
-			return
-		}
-
-		amount := Amount{
-			Amount: getItemAmount(),
-		}
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			tpl.Execute(w, amount)
-		})
 		http.HandleFunc("/random", randomSearchHandler)
 		http.HandleFunc("/search", searchHandler)
 		http.ListenAndServe(":3000", nil)
 	} else {
-		fmt.Println(getItemAmount())
+		amount := strconv.Itoa(getItemAmount())
+		startTime := time.Now().Unix()
+		fmt.Println(amount + " pages have been indexed.")
 		// For every link, visit that link
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 			link := e.Attr("href")
 			c.Visit(e.Request.AbsoluteURL(link))
 		})
 
-		// Print the amount of websites indexed
-		fmt.Println(getItemAmount())
-
 		// Process the url information we get from the request
 		c.OnRequest(func(r *colly.Request) {
+			if globalAmount >= 100 {
+				timeEnd := time.Now().Unix()
+				fmt.Println("Got 100 indexed sites in: " + strconv.Itoa(int(timeEnd-startTime)))
+				return
+			}
 			processAddress(r.URL)
 		})
 
