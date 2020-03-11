@@ -29,22 +29,19 @@ type Item struct {
 
 func processAddress(urlString *url.URL) {
 	// check if there is a entry for the host
-	var item Item
-	if err := db.Where("host = ?", urlString.Host).First(&item).Error; err != nil {
-		item := Item{
-			URL:    urlString.String(),
-			Scheme: urlString.Scheme,
-			Host:   urlString.Host,
-			Path:   urlString.Path,
-		}
-
-		// Save to the database
-		db.NewRecord(item)
-		db.Save(&item)
-
-		// Show what websites have been indexed
-		fmt.Println(urlString.Host + " has been indexed.")
+	item := Item{
+		URL:    urlString.String(),
+		Scheme: urlString.Scheme,
+		Host:   urlString.Host,
+		Path:   urlString.Path,
 	}
+
+	// Save to the database
+	db.NewRecord(item)
+	db.Save(&item)
+
+	// Show what websites have been indexed
+	fmt.Println(item.URL + " has been indexed.")
 }
 
 func initializeDB() {
@@ -133,6 +130,7 @@ func main() {
 		http.HandleFunc("/search", searchHandler)
 		http.ListenAndServe(":3000", nil)
 	} else {
+		fmt.Println(getItemAmount())
 		// For every link, visit that link
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 			link := e.Attr("href")
