@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/gocolly/colly"
 	"github.com/jinzhu/gorm"
@@ -46,7 +45,6 @@ func processAddress(urlString *url.URL) {
 
 		// Show what websites have been indexed
 		fmt.Println(item.URL + " has been indexed.")
-		globalAmount += 1
 	}
 }
 
@@ -122,12 +120,14 @@ func main() {
 	flag.Parse()
 
 	if start == "" {
+		port := "3000"
 		http.HandleFunc("/random", randomSearchHandler)
 		http.HandleFunc("/search", searchHandler)
-		http.ListenAndServe(":3000", nil)
+		fmt.Println("Server running on port " + port)
+		http.ListenAndServe(":"+port, nil)
 	} else {
 		amount := strconv.Itoa(getItemAmount())
-		startTime := time.Now().Unix()
+		// startTime := time.Now().Unix()
 		fmt.Println(amount + " pages have been indexed.")
 		// For every link, visit that link
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -137,11 +137,11 @@ func main() {
 
 		// Process the url information we get from the request
 		c.OnRequest(func(r *colly.Request) {
-			if globalAmount >= 100 {
-				timeEnd := time.Now().Unix()
-				fmt.Println("Got 100 indexed sites in: " + strconv.Itoa(int(timeEnd-startTime)))
-				return
-			}
+			//if globalAmount >= 100 {
+			//	timeEnd := time.Now().Unix()
+			//	fmt.Println("Got 100 indexed sites in: " + strconv.Itoa(int(timeEnd-startTime)))
+			//	return
+			//}
 			processAddress(r.URL)
 		})
 

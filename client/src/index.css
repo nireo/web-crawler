@@ -22,3 +22,11 @@ code {
   height: 44px;
   margin: 0 auto;
 }
+
+.search-input:hover {
+  border: none;
+}
+
+.search-input:active {
+  border: none;
+}
