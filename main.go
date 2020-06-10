@@ -90,8 +90,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	query := queries[0]
 
+	fmt.Println(query)
 	var items []Item
-	if err := db.Find(&items).Where("host = ?", query).Error; err != nil {
+	if err := db.Where("host LIKE ?", "%"+query+"%").Find(&items).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -120,7 +121,7 @@ func main() {
 	flag.Parse()
 
 	if start == "" {
-		port := "3000"
+		port := "3001"
 		http.HandleFunc("/random", randomSearchHandler)
 		http.HandleFunc("/search", searchHandler)
 		fmt.Println("Server running on port " + port)

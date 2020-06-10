@@ -7,7 +7,7 @@ const Results = ({ query }) => {
   useEffect(() => {
     if (loaded === false) {
       axios
-        .get(`/?query=${query}`)
+        .get(`/search/?query=${query}`)
         .then((response) => {
           setResults(response.data);
         })
