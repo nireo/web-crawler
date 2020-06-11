@@ -70,11 +70,31 @@ func randomSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(itemToJSON)
 }
 
+func amountHandler(w http.ResponseWriter, r *http.Request) {
+	type AmountJSON struct {
+		Amount int `json:"amount"`
+	}
+
+	amount := AmountJSON{
+		Amount: database.GetItemAmount(db),
+	}
+
+	amountToJSON, err := json.Marshal(amount)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(amountToJSON)
+}
+
 // RunAPI runs the search engine
 func RunAPI(dbParam *gorm.DB) {
 	port := "3001"
 	http.HandleFunc("/random", randomSearchHandler)
 	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/amount", amountHandler)
 
 	db = dbParam
 
