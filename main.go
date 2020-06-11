@@ -63,15 +63,28 @@ type Amount struct {
 
 func randomSearchHandler(w http.ResponseWriter, r *http.Request) {
 	amount := getItemAmount()
-	randomNumber := rand.Intn(amount)
+	// get 10 random search results
+	var indices []int
+	for {
+		if len(indices) == 10 {
+			break
+		}
 
-	var item Item
-	if err := db.Where("id = ?", randomNumber).First(&item).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
+		indices = append(indices, rand.Intn(amount))
 	}
 
-	itemToJSON, err := json.Marshal(item)
+	var items []Item
+	for _, value := range indices {
+		var item Item
+		if err := db.Where("id = ?", value).First(&item).Error; err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		items = append(items, item)
+	}
+
+	itemToJSON, err := json.Marshal(items)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
