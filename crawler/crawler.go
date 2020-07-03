@@ -9,7 +9,7 @@ import (
 	"github.com/nireo/crawler/database"
 )
 
-func processAddress(urlString *url.URL, db *gorm.DB) {
+func processAddress(urlString *url.URL, db *gorm.DB, display bool) {
 	// check if there is a entry for the host
 	url := urlString.String()
 	var exists database.Item
@@ -31,7 +31,7 @@ func processAddress(urlString *url.URL, db *gorm.DB) {
 }
 
 // StartCrawler is the crawler part of the application
-func StartCrawler(startURL string, db *gorm.DB) {
+func StartCrawler(startURL string, db *gorm.DB, display bool) {
 	c := colly.NewCollector()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -39,7 +39,7 @@ func StartCrawler(startURL string, db *gorm.DB) {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		processAddress(r.URL, db)
+		processAddress(r.URL, db, display)
 	})
 
 	c.Visit(startURL)

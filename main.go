@@ -13,7 +13,10 @@ import (
 func main() {
 	// Take start url from the command line
 	var start string
-	flag.StringVar(&start, "website", "", "https://github.com")
+	flag.StringVar(&start, "website", "", "The starting address where the web crawler is planted")
+
+	var display bool
+	flag.BoolVar(&display, "display", true, "Display the website url where the web crawler goes to; default: true")
 	flag.Parse()
 
 	db, err := database.Initialize()
@@ -25,6 +28,6 @@ func main() {
 	if start == "" {
 		api.RunAPI(db)
 	} else {
-		crawler.StartCrawler(start, db)
+		crawler.StartCrawler(start, db, display)
 	}
 }
