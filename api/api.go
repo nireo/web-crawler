@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jinzhu/gorm"
-	"github.com/nireo/crawler/database"
+	"github.com/nireo/web-crawler/database"
 )
 
 var db *gorm.DB

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/jinzhu/gorm"
-	"github.com/nireo/crawler/database"
+	"github.com/nireo/web-crawler/database"
 )
 
 func processAddress(urlString *url.URL, db *gorm.DB, display bool) {

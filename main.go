@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/nireo/crawler/api"
-	"github.com/nireo/crawler/crawler"
-	"github.com/nireo/crawler/database"
+	"github.com/nireo/web-crawler/api"
+	"github.com/nireo/web-crawler/crawler"
+	"github.com/nireo/web-crawler/database"
 )
 
 func main() {
